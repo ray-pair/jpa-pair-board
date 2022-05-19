@@ -2,11 +2,14 @@ package com.prgrms.jpapairboard.user.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.prgrms.jpapairboard.user.entity.Hobby;
 import com.prgrms.jpapairboard.user.entity.User;
 import com.prgrms.jpapairboard.user.service.UserService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -36,23 +39,24 @@ class UserApiControllerTest {
     @MockBean
     UserService userService;
 
+
     @Nested
     class Method_save_Test {
 
         private static final String URL = "/api/v1/users";
+        private final Map<String, Object> validRequest = Map.of(
+                "email", "test@emial.com",
+                "name", "san");
 
         @Nested
         class 필수_값이_모두_존재하는_입력이_들어오면 {
 
             @Test
             void Created_200을_응답한다() throws Exception {
-                final Map<String, String> requestMap = new HashMap<>();
-                requestMap.put("email", "san9580@naver.com");
-                requestMap.put("name", "san kim");
 
                 final var result = mockMvc.perform(post(URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(toJson(requestMap)));
+                                                           .contentType(MediaType.APPLICATION_JSON)
+                                                           .content(toJson(validRequest)));
 
                 verify(userService, times(1)).save(any(User.class));
                 result.andExpect(status().isCreated());
@@ -65,15 +69,13 @@ class UserApiControllerTest {
 
             @Test
             void create_200을_응답한다() throws Exception {
-                final Map<String, Object> requestMap = new HashMap<>();
-                requestMap.put("email", "san9580@naver.com");
-                requestMap.put("name", "san kim");
+                final Map<String, Object> requestMap = new HashMap<>(validRequest);
                 requestMap.put("age", 29);
-                requestMap.put("hobby", "soccer");
+                requestMap.put("hobby", Hobby.DANCE);
 
                 final var result = mockMvc.perform(post(URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(toJson(requestMap)));
+                                                           .contentType(MediaType.APPLICATION_JSON)
+                                                           .content(toJson(requestMap)));
 
                 result.andExpect(status().isCreated());
                 assertThat(result.andReturn().getResponse()).isNotNull();
@@ -86,15 +88,12 @@ class UserApiControllerTest {
             @ParameterizedTest
             @NullAndEmptySource
             void BadRequest_400을_응답한다(String inputName) throws Exception {
-                final Map<String, Object> requestMap = new HashMap<>();
-                requestMap.put("email", "san9580@naver.com");
+                final Map<String, Object> requestMap = new HashMap<>(validRequest);
                 requestMap.put("name", inputName);
-                requestMap.put("age", 29);
-                requestMap.put("hobby", "soccer");
 
                 final var result = mockMvc.perform(post(URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(toJson(requestMap)));
+                                                           .contentType(MediaType.APPLICATION_JSON)
+                                                           .content(toJson(requestMap)));
 
                 result.andExpect(status().isBadRequest());
             }
@@ -106,38 +105,82 @@ class UserApiControllerTest {
             @ParameterizedTest
             @NullAndEmptySource
             void BadRequest_400을_응답한다(String inputEmail) throws Exception {
-                final Map<String, Object> requestMap = new HashMap<>();
+                final Map<String, Object> requestMap = new HashMap<>(validRequest);
                 requestMap.put("email", inputEmail);
-                requestMap.put("name", "san");
-                requestMap.put("age", 20);
-                requestMap.put("hobby", "soccer");
 
                 final var result = mockMvc.perform(post(URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(toJson(requestMap)));
+                                                           .contentType(MediaType.APPLICATION_JSON)
+                                                           .content(toJson(requestMap)));
 
                 result.andExpect(status().isBadRequest());
             }
         }
 
         @Nested
-        class 유요하지_하지_않는_email을_포함한_입력이_들어오면 {
+        class 유효하지_하지_않는_email을_포함한_입력이_들어오면 {
 
-            @Test
-            @DisplayName("BadRequest 를 응답한다")
-            void It_response_BadRequest() {
+            @ParameterizedTest
+            @ValueSource(strings = {"test@gamil", "@gmail.com", "test", "test@gmail."})
+            void BadRequest_400을_응답한다(String email) throws Exception {
+                final Map<String, Object> requestMap = new HashMap<>(validRequest);
+                requestMap.put("email", email);
 
+                final var result = mockMvc.perform(post(URL)
+                                                           .contentType(MediaType.APPLICATION_JSON)
+                                                           .content(toJson(requestMap)));
+
+                result.andExpect(status().isBadRequest());
             }
         }
 
         @Nested
-        @DisplayName("age 가 음수이면")
-        class Context_with_negative_age {
+        class age가_음수인_입력이_들어오면 {
 
-            @Test
-            @DisplayName("BadRequest 를 응답한다")
-            void It_response_BadRequest() {
+            @ParameterizedTest
+            @ValueSource(ints = {-1, Integer.MIN_VALUE})
+            void BadRequest_400을_응답한다(int negativeInteger) throws Exception {
+                final Map<String, Object> requestMap = new HashMap<>(validRequest);
+                requestMap.put("age", negativeInteger);
 
+                final var result = mockMvc.perform(post(URL)
+                                                           .contentType(MediaType.APPLICATION_JSON)
+                                                           .content(toJson(requestMap)));
+
+                result.andExpect(status().isBadRequest());
+            }
+        }
+
+        @Nested
+        class 존재하지_않는_취미가_입력될_경우 {
+
+            @ParameterizedTest
+            @ValueSource(strings = {"soccer", "driving", "reading"})
+            void BadRequest_400을_응답한다(String invalidInputHobby) throws Exception {
+                final Map<String, Object> requestMap = new HashMap<>(validRequest);
+                requestMap.put("hobby", invalidInputHobby);
+
+                final var result = mockMvc.perform(post(URL)
+                                                           .contentType(MediaType.APPLICATION_JSON)
+                                                           .content(toJson(requestMap)));
+
+                result.andExpect(status().isBadRequest());
+            }
+        }
+
+        @Nested
+        class 존재하는_취미가_입력될_경우 {
+
+            @ParameterizedTest
+            @EnumSource(Hobby.class)
+            void Created_200을_응답한다(Hobby validInputHobby) throws Exception {
+                final Map<String, Object> requestMap = new HashMap<>(validRequest);
+                requestMap.put("hobby", validInputHobby);
+
+                final var result = mockMvc.perform(post(URL)
+                                                           .contentType(MediaType.APPLICATION_JSON)
+                                                           .content(toJson(requestMap)));
+
+                result.andExpect(status().isCreated());
             }
         }
 
