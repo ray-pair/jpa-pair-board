@@ -2,12 +2,9 @@ package com.prgrms.jpapairboard.user.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.prgrms.jpapairboard.user.entity.Hobby;
-import com.prgrms.jpapairboard.user.entity.User;
 import com.prgrms.jpapairboard.user.service.UserService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +18,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -58,7 +54,7 @@ class UserApiControllerTest {
                                                            .contentType(MediaType.APPLICATION_JSON)
                                                            .content(toJson(validRequest)));
 
-                verify(userService, times(1)).save(any(User.class));
+                verify(userService).save(any());
                 result.andExpect(status().isCreated());
                 assertThat(result.andReturn().getResponse()).isNotNull();
             }
@@ -71,7 +67,7 @@ class UserApiControllerTest {
             void create_200을_응답한다() throws Exception {
                 final Map<String, Object> requestMap = new HashMap<>(validRequest);
                 requestMap.put("age", 29);
-                requestMap.put("hobby", Hobby.DANCE);
+                requestMap.put("hobby", "dance");
 
                 final var result = mockMvc.perform(post(URL)
                                                            .contentType(MediaType.APPLICATION_JSON)
@@ -120,7 +116,7 @@ class UserApiControllerTest {
         class 유효하지_하지_않는_email을_포함한_입력이_들어오면 {
 
             @ParameterizedTest
-            @ValueSource(strings = {"test@gamil", "@gmail.com", "test", "test@gmail."})
+            @ValueSource(strings = {"@gmail.com", "test", "test@gmail."})
             void BadRequest_400을_응답한다(String email) throws Exception {
                 final Map<String, Object> requestMap = new HashMap<>(validRequest);
                 requestMap.put("email", email);
@@ -147,40 +143,6 @@ class UserApiControllerTest {
                                                            .content(toJson(requestMap)));
 
                 result.andExpect(status().isBadRequest());
-            }
-        }
-
-        @Nested
-        class 존재하지_않는_취미가_입력될_경우 {
-
-            @ParameterizedTest
-            @ValueSource(strings = {"soccer", "driving", "reading"})
-            void BadRequest_400을_응답한다(String invalidInputHobby) throws Exception {
-                final Map<String, Object> requestMap = new HashMap<>(validRequest);
-                requestMap.put("hobby", invalidInputHobby);
-
-                final var result = mockMvc.perform(post(URL)
-                                                           .contentType(MediaType.APPLICATION_JSON)
-                                                           .content(toJson(requestMap)));
-
-                result.andExpect(status().isBadRequest());
-            }
-        }
-
-        @Nested
-        class 존재하는_취미가_입력될_경우 {
-
-            @ParameterizedTest
-            @EnumSource(Hobby.class)
-            void Created_200을_응답한다(Hobby validInputHobby) throws Exception {
-                final Map<String, Object> requestMap = new HashMap<>(validRequest);
-                requestMap.put("hobby", validInputHobby);
-
-                final var result = mockMvc.perform(post(URL)
-                                                           .contentType(MediaType.APPLICATION_JSON)
-                                                           .content(toJson(requestMap)));
-
-                result.andExpect(status().isCreated());
             }
         }
 
