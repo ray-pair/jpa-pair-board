@@ -5,6 +5,8 @@ import com.prgrms.jpapairboard.user.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("api/v1/users")
 public class UserApiController {
@@ -17,7 +19,7 @@ public class UserApiController {
 
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
-    public void save(@RequestBody UserCreateRequest userCreateRequest) {
+    public void save(@RequestBody @Valid UserCreateRequest userCreateRequest) {
         userService.save(userCreateRequest.toDomain());
     }
 }
