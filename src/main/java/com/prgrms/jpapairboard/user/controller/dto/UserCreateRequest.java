@@ -1,5 +1,6 @@
 package com.prgrms.jpapairboard.user.controller.dto;
 
+import com.prgrms.jpapairboard.user.entity.Hobby;
 import com.prgrms.jpapairboard.user.entity.User;
 
 import javax.validation.constraints.*;
@@ -16,9 +17,9 @@ public class UserCreateRequest {
     @PositiveOrZero
     private final Integer age;
 
-    private final String hobby;
+    private final Hobby hobby;
 
-    public UserCreateRequest(String name, String email, int age, String hobby) {
+    public UserCreateRequest(String name, String email, int age, Hobby hobby) {
         this.name = name;
         this.email = email;
         this.age = age;
@@ -41,7 +42,7 @@ public class UserCreateRequest {
         return age;
     }
 
-    public String getHobby() {
+    public Hobby getHobby() {
         return hobby;
     }
 }
