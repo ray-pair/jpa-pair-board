@@ -65,7 +65,7 @@ class UserApiControllerTest {
             void create_200을_응답한다() throws Exception {
                 final Map<String, Object> requestMap = new HashMap<>(validRequest);
                 requestMap.put("age", 29);
-                requestMap.put("hobby", "dance");
+                requestMap.put("hobby", "DANCE");
 
                 final var result = mockMvc.perform(post(URL)
                                                            .contentType(MediaType.APPLICATION_JSON)
